@@ -39,6 +39,8 @@ demonstrate access from another device.
 Output goes in a new `evidence/<timestamp>/` directory. Use `--out <directory>` to
 choose another location. Existing directories are refused. Each completed stage
 is saved immediately, including an updated report.
+If Chromium cannot capture a screenshot, the JSON evidence is still saved and
+the report records a warning for that stage.
 
 ## Output
 

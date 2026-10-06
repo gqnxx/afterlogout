@@ -61,12 +61,22 @@ Install the browser first: npx playwright install chromium`);
         }
       }
       const imagePath = join(directory, `${stage}.png`);
-      await page.screenshot({ path: imagePath });
-      await chmod(imagePath, 0o600);
       snapshot.warnings.push(...await network.flush());
       snapshots.push(snapshot);
       await saveJson(directory, `${stage}.json`, snapshot);
       await saveJson(directory, 'network.json', network.exchanges);
+      try {
+        await page.bringToFront();
+        await page.evaluate(() => new Promise<void>(done => {
+          const timer = setTimeout(done, 1000);
+          requestAnimationFrame(() => requestAnimationFrame(() => { clearTimeout(timer); done(); }));
+        }));
+        await page.screenshot({ path: imagePath });
+        await chmod(imagePath, 0o600);
+      } catch (error) {
+        snapshot.warnings.push(`Screenshot unavailable: ${error instanceof Error ? error.message : String(error)}`);
+        await saveJson(directory, `${stage}.json`, snapshot);
+      }
       const summary = await writeReport(directory, snapshots, network.exchanges, marker);
       console.log(`Saved ${stage}: ${snapshot.items.length} storage entries, ${snapshot.warnings.length} warnings.`);
       if (stage === 'account-a' && !summary.markerSeenInAccountA) console.log('Marker missing from account A evidence. Later matches cannot establish an account A baseline.');
